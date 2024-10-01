@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB:  # Название базы данных в PostgreSQL
+      POSTGRES_USER:  # Имя пользователя в базе данных PostgreSQL
+      POSTGRES_PASSWORD:  # Пароль к базе данных PostgreSQL
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - http_monitoring
+
+  async_app:
+    build:
+      context: ./HTTP_API
+      dockerfile: Dockerfile
+    environment:
+      DB_USER:  # Имя пользователя в базе данных PostgreSQL
+      DB_PASS:  # Пароль к базе данных PostgreSQL
+      DB_HOST: "db"
+      DB_NAME:  # Название базы данных в PostgreSQL
+      SECRET_KEY:  # Секретный ключ для шифрования данных.
+    ports:
+    - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - http_monitoring
+
+  monitoring_app:
+    build:
+      context: ./CHECK_PRICE_API 
+      dockerfile: Dockerfile
+    environment:
+      DB_USER:  # Имя пользователя в базе данных PostgreSQL
+      DB_PASS:  # Пароль к базе данных PostgreSQL
+      DB_HOST: "db" # Хост к базе данных PostgreSQL
+      DB_NAME:  # Название базы данных в PostgreSQL
+    depends_on:
+      - async_app
+      - db
+    networks:
+      - http_monitoring
+
+  aiogram_bot:
+    build:
+      context: ./BOT_API
+      dockerfile: Dockerfile
+    environment:
+      TOKEN:  # Токен полученный в ТГ у @BotFather
+      ADMIN_ID:  # ID пользователя, полученное у @getmyid_bot
+    depends_on:
+      - monitoring_app
+      - db
+    networks:
+      - http_monitoring
+
+volumes:
+  postgres_data:
+
+networks:
+  http_monitoring:
