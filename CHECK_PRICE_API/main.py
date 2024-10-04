@@ -9,11 +9,20 @@ Func:
     main: Создаёт таски, для асинхронного выполнения кода.
 """
 import asyncio
+import logging
 
 from database.FDataBase import (get_session,
                                 select_all_item,
                                 add_item_price)
 from backend.backend import get_html, get_price_item
+
+
+logging.basicConfig(
+    filename="SHECK_PRICE_API.log",
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 async def monitoring_price():
