@@ -20,11 +20,13 @@ Func:
     get_history_price_step_one: Получение истории цен на товар. FSM первый этап.
     get_history_price_step_two: Получение истории цен на товар. FSM второй этап.
 """
-from datetime import datetime
 import os
+import logging
 import aiohttp
 from aiogram import F
+from datetime import datetime
 from aiogram.types import Message
+from aiogram.filters import Command
 from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 
@@ -32,9 +34,9 @@ from core.forms_state.form_bot import Form_add, Form_id_delete, Form_id_list
 from core.keyboards.reply_inline import ReplyKeyBoards
 from core.content.contents import messages, emoticons, url, instruction
 from core.utils.commands import set_commands
-from aiogram.filters import Command
 
 
+logger = logging.getLogger(__name__)
 admin_id = int(os.getenv('ADMIN_ID'))
 router = Router()
 
@@ -71,11 +73,13 @@ async def start_bot(bot: Bot):
     """Отправляет пользователю сообщение о старте бота."""
     await set_commands(bot)
     await bot.send_message(admin_id, text=messages[1])
+    logger.info("Бот запущен!")
 
 
 async def stop_bot(bot: Bot):
     """Отправляет пользователю сообщение об остановке бота."""
     await bot.send_message(admin_id, text=messages[2])
+    logger.info("Бот остановлен!")
 
 
 @router.message(Command("start"))
@@ -154,12 +158,15 @@ async def form_url_price(message: Message, state: FSMContext):
             error = response['detail'][0]
             await message.answer(
                 "Укажите верный URL формата 'https://... как в инструкции!")
+            logger.debug("Проблема с форматом введённой почты!")
         else:
             await message.answer(response['message'])
     except aiohttp.ClientError as ex:
-        await message.answer(f"Ошибка соединения: {ex}")
+        await message.answer("Ошибка соединения с сервером... Попробуйте позже.")
+        logger.debug("Ошибка соединения %s", ex)
     except Exception as ex:
-        await message.answer(f"Ошибка проиложеиня: {ex}")
+        await message.answer("Ошибка в работе бота... Попробуйте позже.")
+        logger.debug("Ошибка проиложеиня %s", ex)
     finally:
         await state.clear()
 
@@ -196,19 +203,18 @@ async def delete_step_two(message: Message, state: FSMContext):
                                     method="DELETE")
         if 'detail' in response:
             error = response['detail'][0]
-            await message.answer(
-                "Ошибка добавления товара:"
-                f"{error['type']}\n"
-                f"{' '.join(map(str, error['loc']))}\n"
-                f"{error['msg']}\n"
-                f"{error['input']}\n"
-                f"{error.get('ctx', {}).get('error', 'No additional context')}")
+            await message.answer("Ошибка в работе бота... Попробуйте позже.")
+            logger.debug("Ошибка добавления товара: type - %s msg - %s",
+                         error['type'],
+                         error['msg'])
         else:
             await message.answer(response['message'])
     except aiohttp.ClientError as ex:
-        await message.answer(f"Ошибка соединения: {ex}")
+        await message.answer("Ошибка соединения с сервером... Попробуйте позже.")
+        logger.debug("Ошибка соединения %s", ex)
     except Exception as ex:
-        await message.answer(f"Ошибка проиложеиня: {ex}")
+        await message.answer("Ошибка в работе бота... Попробуйте позже.")
+        logger.debug("Ошибка проиложеиня %s", ex)
     finally:
         await state.clear()
 
@@ -226,7 +232,8 @@ async def get_list_monitoring(message: types.Message):
     try:
         response = await fetch_data(url=url['get_list'], method="GET")
         if response == None:
-            await message.answer("Проблема в работе сервера!")
+            await message.answer("Проблема в работе сервера... Попробуйте позже.")
+            logger.debug("Проблема с работой сервера!.")
         products = response['message']
         if isinstance(products, list):
             for item in products:
@@ -236,9 +243,11 @@ async def get_list_monitoring(message: types.Message):
         else:
             await message.answer(text=products)
     except aiohttp.ClientError as ex:
-        await message.answer(f"Ошибка соединения: {ex}")
+        await message.answer("Ошибка соединения с сервером... Попробуйте позже.")
+        logger.debug("Ошибка соединения %s", ex)
     except Exception as ex:
-        await message.answer(f"Ошибка проиложеиня: {ex}")
+        await message.answer("Ошибка в работе бота... Попробуйте позже.")
+        logger.debug("Ошибка проиложеиня %s", ex)
 
 
 @router.message(F.text == emoticons[5], F.from_user.id == admin_id)
@@ -273,13 +282,10 @@ async def get_history_price_step_two(message: Message, state: FSMContext):
                                     method="GET")
         if 'detail' in response:
             error = response['detail'][0]
-            await message.answer(
-                "Ошибка добавления товара:"
-                f"{error['type']}\n"
-                f"{' '.join(map(str, error['loc']))}\n"
-                f"{error['msg']}\n"
-                f"{error['input']}\n"
-                f"{error.get('ctx', {}).get('error', 'No additional context')}")
+            await message.answer("Ошибка в работе бота... Попробуйте позже.")
+            logger.debug("Ошибка добавления товара: type - %s msg - %s",
+                         error['type'],
+                         error['msg'])
         else:
             history_price = response['message']
             if isinstance(history_price, list):
@@ -292,8 +298,8 @@ async def get_history_price_step_two(message: Message, state: FSMContext):
             elif isinstance(history_price, str):
                 await message.answer(history_price)
     except aiohttp.ClientError as ex:
-        await message.answer(f"Ошибка соединения: {ex}")
+        await message.answer("Ошибка соединения с сервером... Попробуйте позже.")
+        logger.debug("Ошибка соединения %s", ex)
     except Exception as ex:
-        await message.answer(f"Ошибка проиложеиня: {ex}")
-    finally:
-        await state.clear()
+        await message.answer("Ошибка в работе бота... Попробуйте позже.")
+        logger.debug("Ошибка проиложеиня %s", ex)

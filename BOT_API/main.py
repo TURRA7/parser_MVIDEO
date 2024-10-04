@@ -10,12 +10,20 @@ Func:
 """
 import os
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from core.handlers.basic import router, start_bot, stop_bot
+
+
+logging.basicConfig(
+    filename="BOT_API.log",
+    level=logging.DEBUG,
+    format="%(actime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 
 async def start():
