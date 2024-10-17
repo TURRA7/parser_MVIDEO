@@ -18,7 +18,7 @@ Func:
 
     get_session: Создаёт асинхронную сессию,
         для работы с базой данных
-    
+
     create_tables: Создаёт таблицы в базе данных.
     delete_tables: Удаляет таблицы из базы данных.
 
@@ -34,7 +34,7 @@ Func:
         успехе или ошибке и статус код.
 
     select_item: Получает на вход: id товара и объект сессии,
-        проверяет наличие товара в базе данных, 
+        проверяет наличие товара в базе данных,
         возвращает булево значение True если товар есть в базе, иначе False.
 
     select_history_price: Получает на вход: id товара и объект сессии,
@@ -82,7 +82,6 @@ class Product(Base):
         price_history: Связь с таблицей истории цен на товар.
     """
     __tablename__ = "products"
-    
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
@@ -133,7 +132,7 @@ async def delete_tables() -> None:
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Функция получения асинхронной сессии."""
     async with AsyncSessionLocal() as session:
-            yield session
+        yield session
 
 
 async def add_item_info(name: str, description: str,
@@ -151,20 +150,25 @@ async def add_item_info(name: str, description: str,
         url_info: Ссылка на API с общей информацией о товаре.
         url_price: Ссылка на API с информацией о цене товара.
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
-    
+
         Добавляет информацию о товаре в базе данных,
         возвращает сообщение об успехе или ошибке и статус код.
     """
     result = Product(name=name, description=description,
-                    rating=rating, url_info=url_info, url_price=url_price)
-    try:
+                     rating=rating, url_info=url_info, url_price=url_price)
+    if (
+        isinstance(result, Product) and
+        result.name and result.description and
+        result.rating and result.url_info and result.url_price
+    ):
         session.add(result)
         await session.commit()
         return {"message": f"Товар {name} добавлен!", "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Проблемы с добавлением товара: {ex}",
+    else:
+        return {"message": "Проблемы с добавлением товара, "
+                "проверьте передаваемые даныне",
                 "status_code": 422}
 
 
@@ -177,7 +181,7 @@ async def delete_item(product_id: int,
 
         product_id: id товара
         session: Асинхронная сессия для базы данных.
-    
+
     Notes:
 
         Удаляет товар и его историю цен по переданному id,
@@ -185,15 +189,15 @@ async def delete_item(product_id: int,
 
     """
     result = await session.scalars(select(Product).filter_by(id=product_id))
-    try:
+    if result is not None:
         product = result.first()
         if product:
             await session.delete(product)
             await session.commit()
             return {"message": f"Товар с id: {product_id} удалён!",
                     "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Проблемы с удалением товара: {ex}",
+    else:
+        return {"message": f"Товар с id: {product_id} не найден!",
                 "status_code": 422}
 
 
@@ -206,7 +210,7 @@ async def select_item(product_id: int,
 
         product_id: id товара
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
 
         Возвращает булево значение, которое говорит от наличие
@@ -227,23 +231,22 @@ async def select_history_price(
 
         product_id: id товара
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
 
         Возвращает историю цен на товар и время появления этих цен в базе,
         так же возвращает статус код, иначе возвращает
         сообщение об ошибке и статус кода.
     """
-    try:
-        result = await session.scalars(
-            select(PriceHistory).filter_by(product_id=product_id))
+    result = await session.scalars(
+        select(PriceHistory).filter_by(product_id=product_id))
+    if result is not None:
         history = [{"product_id": res.product_id,
                     "price": res.price,
                     "date": res.timestamp} for res in result]
-
         return {"message": history, "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Ошибка получения истории цен товара: {ex}",
+    else:
+        return {"message": f"Товар с id: {product_id} не найден!",
                 "status_code": 422}
 
 
@@ -255,18 +258,17 @@ async def select_all_item(
     Args:
 
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
 
         Возвращает список(словарь) товаров, находящихся на мониторинге
     """
-    try:
-        result = await session.scalars(select(Product))
+    result = await session.scalars(select(Product))
+    if result is not None:
         products = [{"id": res.id, "name": res.name,
-                    "description": res.description,
-                    "rating": round(res.rating, 1)} for res in result]
+                     "description": res.description,
+                     "rating": round(res.rating, 1)} for res in result]
         return {"message": products, "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Ошибка получения товаров на мониторинге: {ex}",
+    else:
+        return {"message": "Отсутствуют товары на мониторинге!",
                 "status_code": 422}
-

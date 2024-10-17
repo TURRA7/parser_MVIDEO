@@ -3,11 +3,11 @@
 
 Shemas:
 
-    UrlCheck: 
+    UrlCheck:
         url_info: URL от API МВИДЕО c общей ифно о товаре.
         url_price: URL от API МВИДЕО c ифно о цене товара.
 
-    ProductId: 
+    ProductId:
         product_id: id продукта.
 """
 from pydantic import BaseModel, HttpUrl

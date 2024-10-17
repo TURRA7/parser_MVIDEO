@@ -5,7 +5,9 @@ classes:
     ReplyKeyBoards: Класс для создание Reply клавиатуры.
     InlineKeyBoards: Класс для создание Inline клавиатуры.
 """
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (InlineKeyboardMarkup,
+                           InlineKeyboardButton,
+                           ReplyKeyboardMarkup)
 from aiogram import types
 
 
@@ -17,7 +19,7 @@ class ReplyKeyBoards:
         pass
 
     @staticmethod
-    def create_keyboard_reply(*buttons: str):
+    def create_keyboard_reply(*buttons: str) -> ReplyKeyboardMarkup:
         """
         Метод создаёт клавиатуру с предаными кнопопками.
 
@@ -35,12 +37,12 @@ class ReplyKeyBoards:
 class InlineKeyBoards:
     """Класс для работы с Inline клавиатурой."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Метод инициализации класса."""
         pass
 
     @staticmethod
-    def create_keyboard_inline(text, callbacks: str):
+    def create_keyboard_inline(text, callbacks: str) -> InlineKeyboardMarkup:
         """
         Метод создаёт клавиатуру с предаными кнопопками.
 

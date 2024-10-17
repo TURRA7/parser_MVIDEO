@@ -2,7 +2,7 @@
 Модуль обработчиков маршрутов FastAPI.
 
 Func:
-    
+
     add_product: Маршрут добавления товара. Получает на вход:
         валидированные URL и объект сессии, парсит их,
         добавляет спарсенную информацию в базу данных,
@@ -20,16 +20,18 @@ Func:
         Получает на вход: id товара и объект сессии, возвращает всю историю цен
         на товар, в том числе и время добавления цены, а так же и статус код.
 """
+import logging
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.FDataBase import (add_item_info, delete_item,
                                 select_history_price, select_item,
                                 get_session, select_all_item)
 from backend.backend import get_html, get_info_item
 from models.model import UrlCheck, ProductId
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
+logger = logging.getLogger(__name__)
 app_parsing = APIRouter(prefix="/parsing")
 
 
@@ -40,7 +42,7 @@ async def add_product(url: UrlCheck,
     Функция добавления товара на мониторинг.
 
     Args:
-        
+
         url_info: URL от API МВИДЕО c общей ифно о товаре.
         url_price: URL от API МВИДЕО c ифно о цене товара.
 
@@ -69,8 +71,10 @@ async def add_product(url: UrlCheck,
             return {"message": resault['message'],
                     'status_code': resault['status_code']}
         else:
-            return {"message": data["error"], "status_code": data["status_code"]}
-        
+            logger.debug(f"Ошибка при получении данных: {str(data['error'])}")
+            return {"message": f"Ошибка в работе сервиса, {data['error']}",
+                    "status_code": 422}
+
 
 @app_parsing.delete("/delete_product/{item_id}")
 async def delete_product(item_id: int,
@@ -83,7 +87,7 @@ async def delete_product(item_id: int,
         item_id: id товара в базе данных.
 
     Returns:
-        
+
         Удаляет товар и его историю цен из базы данных.
     """
     product = ProductId(product_id=item_id)
@@ -98,7 +102,8 @@ async def delete_product(item_id: int,
 
 @app_parsing.get("/get_list_monitoring")
 async def get_list_monitoring(
-    session: AsyncSession = Depends(get_session)) -> dict:
+    session: AsyncSession = Depends(get_session)
+) -> dict:
     """
     Функция получения товаров, находящихся на мониторинге.
 
@@ -110,16 +115,17 @@ async def get_list_monitoring(
     resault = await select_all_item(session=session)
     if resault['message'] == []:
         return {"message": "Нет товаров на мониторинге!",
-                    'status_code': resault['status_code']}
+                'status_code': resault['status_code']}
     else:
         return {"message": resault['message'],
-                    'status_code': resault['status_code']}
+                'status_code': resault['status_code']}
 
 
 @app_parsing.get("/get_history_price_item/{item_id}")
 async def get_history_price_item(
     item_id: int,
-    session: AsyncSession = Depends(get_session)) -> dict:
+    session: AsyncSession = Depends(get_session)
+) -> dict:
     """
     Функция получения истории цен заданного товара.
 
@@ -139,4 +145,3 @@ async def get_history_price_item(
                 'status_code': resault['status_code']}
     else:
         return {"message": "Товар не найден в базе данных."}
-   

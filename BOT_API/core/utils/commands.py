@@ -9,7 +9,7 @@ from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
 
-async def set_commands(bot: Bot):
+async def set_commands(bot: Bot) -> None:
     """Обработчик меню (синяя кнопочка слева - снизу)."""
     commands: list = [
         BotCommand(

@@ -9,7 +9,7 @@ Classes:
 
     Form_id_delete:
         product_id: id товара в базе данных.
-    
+
     Form_id_list:
         product_id: id товара в базе данных.
 """
@@ -49,4 +49,3 @@ class Form_id_list(StatesGroup):
         product_id: id товара в базе данных.
     """
     product_id = State()
-

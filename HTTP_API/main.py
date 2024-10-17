@@ -7,11 +7,12 @@ Func:
 """
 import asyncio
 import uvicorn
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from database.FDataBase import create_tables, delete_tables
+from database.FDataBase import create_tables
 from routers.router import app_parsing
 from config import SECRET_KEY
 
@@ -30,6 +31,14 @@ app.add_middleware(
 )
 
 
+logging.basicConfig(
+    filename="HTTP_API.log",
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
 async def main() -> None:
     """
     Стартовая функция.
@@ -37,7 +46,10 @@ async def main() -> None:
     func:
         create_tables: создаёт таблицы в базе.
     """
-    await create_tables()
+    try:
+        await create_tables()
+    except Exception as ex:
+        logger.debug(ex)
 
 
 if __name__ == "__main__":

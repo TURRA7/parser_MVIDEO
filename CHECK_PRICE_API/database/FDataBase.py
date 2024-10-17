@@ -36,6 +36,7 @@ from sqlalchemy import func
 
 from config import (DB_USER, DB_PASS, DB_HOST, DB_NAME)
 
+
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
 engine = create_async_engine(DATABASE_URL)
 AsyncSessionLocal = sessionmaker(
@@ -64,7 +65,6 @@ class Product(Base):
         price_history: Связь с таблицей истории цен на товар.
     """
     __tablename__ = "products"
-    
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
@@ -103,7 +103,7 @@ class PriceHistory(Base):
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Функция получения асинхронной сессии."""
     async with AsyncSessionLocal() as session:
-            yield session
+        yield session
 
 
 async def select_all_item(
@@ -114,21 +114,21 @@ async def select_all_item(
     Args:
 
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
 
         Возвращает список(словарь) товаров, находящихся на мониторинге
     """
-    try:
-        result = await session.scalars(select(Product))
+    result = await session.scalars(select(Product))
+    if result is not None:
         products = [{"id": res.id, "name": res.name,
-                    "description": res.description,
-                    "rating": round(res.rating, 1),
-                    "url_info": res.url_info,
-                    "url_price": res.url_price} for res in result]
+                     "description": res.description,
+                     "rating": round(res.rating, 1),
+                     "url_info": res.url_info,
+                     "url_price": res.url_price} for res in result]
         return {"message": products, "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Ошибка получения товаров на мониторинге: {ex}",
+    else:
+        return {"message": "Отсутствуют товары на мониторинге!",
                 "status_code": 422}
 
 
@@ -142,17 +142,21 @@ async def add_item_price(product_id: int, price: float,
         product_id: id товара, к которому добавляется цена
         price: Цена на товар.
         session: Асинхронная сессия для базы данных.
-    
+
     Returns:
         Добавляет цену к товару в базе данных,
         возвращает сообщение об успехе или ошибке и статус кода.
     """
     result = PriceHistory(product_id=product_id, price=price)
-    try:
+    if (
+        isinstance(result, PriceHistory) and
+        result.product_id and result.price
+    ):
         session.add(result)
         await session.commit()
         return {"message": f"Цена {price} добавленa: {product_id}",
                 "status_code": 200}
-    except Exception as ex:
-        return {"message": f"Проблемы с добавлением цены: {ex}",
+    else:
+        return {"message": "Проблемы с добавлением цены, "
+                "проверьте передаваемые даныне",
                 "status_code": 422}
