@@ -1,0 +1,33 @@
+name: ParserMVidoe
+on:
+    push:
+        branches:
+            main
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+            
+            - name: Install Docker Compose
+              run: |
+                sudo apt-get update
+                sudo apt_get install -y docker-compose
+            
+            - name: Set enviroment variables
+              run: |
+                echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+                echo "DB_PASS=${{ secrets.DB_PASS }}" >> $GITHUB_ENV
+                echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+                echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+                echo "TOKEN=${{ secrets.TOKEN }}" >> $GITHUB_ENV
+                echo "ADMIN_ID=${{ secrets.ADMIN_ID }}" >> $GITHUB_ENV
+            
+            - name: Set up Docker Compose and build + run
+              run: |
+                docker-compose up --build -d
+            
+            - name: Check containers logs
+              run: |
+                docker-compose logs
