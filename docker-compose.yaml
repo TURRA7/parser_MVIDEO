@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: # Название базы данных в PostgreSQL
-      POSTGRES_USER: # Имя пользователя в базе данных PostgreSQL
-      POSTGRES_PASSWORD: # Пароль к базе данных PostgreSQL
+      POSTGRES_DB: ${DB_BANE} # Название базы данных в PostgreSQL
+      POSTGRES_USER: ${DB_USER} # Имя пользователя в базе данных PostgreSQL
+      POSTGRES_PASSWORD: ${DB_PASS} # Пароль к базе данных PostgreSQL
     ports:
       - "5433:5432"
     volumes:
@@ -19,11 +19,11 @@ services:
       context: ./HTTP_API
       dockerfile: Dockerfile
     environment:
-      DB_USER: # Имя пользователя в базе данных PostgreSQL
-      DB_PASS: # Пароль к базе данных PostgreSQL
+      DB_USER: ${DB_USER} # Имя пользователя в базе данных PostgreSQL
+      DB_PASS: ${DB_PASS} # Пароль к базе данных PostgreSQL
       DB_HOST: db
-      DB_NAME: # Название базы данных в PostgreSQL
-      SECRET_KEY: # Секретный ключ для шифрования данных.
+      DB_NAME: ${DB_BANE} # Название базы данных в PostgreSQL
+      SECRET_KEY: ${SECRET_KEY} # Секретный ключ для шифрования данных.
     ports:
     - "8000:8000"
     depends_on:
@@ -36,10 +36,10 @@ services:
       context: ./CHECK_PRICE_API 
       dockerfile: Dockerfile
     environment:
-      DB_USER: # Имя пользователя в базе данных PostgreSQL
-      DB_PASS: # Пароль к базе данных PostgreSQL
+      DB_USER: ${DB_USER} # Имя пользователя в базе данных PostgreSQL
+      DB_PASS: ${DB_PASS} # Пароль к базе данных PostgreSQL
       DB_HOST: db
-      DB_NAME: # Название базы данных в PostgreSQL
+      DB_NAME: ${DB_BANE} # Название базы данных в PostgreSQL
     depends_on:
       - async_app
       - db
@@ -51,8 +51,8 @@ services:
       context: ./BOT_API
       dockerfile: Dockerfile
     environment:
-      TOKEN: # Токен полученный в ТГ у @BotFather
-      ADMIN_ID: # ID пользователя, полученное у @getmyid_bot
+      TOKEN: ${TOKEN} # Токен полученный в ТГ у @BotFather
+      ADMIN_ID: ${ADMIN_ID} # ID пользователя, полученное у @getmyid_bot
     depends_on:
       - monitoring_app
       - db
