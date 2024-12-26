@@ -13,7 +13,7 @@ jobs:
             - name: Install Docker Compose
               run: |
                 sudo apt-get update
-                sudo apt_get install -y docker-compose
+                sudo apt-get install -y docker-compose
             
             - name: Set enviroment variables
               run: |
